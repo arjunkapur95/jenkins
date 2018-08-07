@@ -1,0 +1,64 @@
+---
+#1a - INSTALLATION OF WGET
+
+- name: install wget
+  yum:
+    name: wget
+    state: present
+
+#1b - INSTALLATION OF OPEN JDK
+
+- name: install openjdk
+  yum:
+    name: java-1.8.0-openjdk
+    state: present
+
+#1c - ACQUIRE JENKINS FROM THE JENKINS REDHAT REPO
+ 
+- name: download jenkins.repo
+  get_url:
+    url: http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+    dest: /etc/yum.repos.d/jenkins.repo
+
+#1d - IMPORT JENKINS KEY (PGP)
+
+- name: import jenkins key
+  rpm_key:
+    state: present
+    key: https://jenkins-ci.org/redhat/jenkins-ci.org.key
+
+#2a - INSTALL, START AND ENABLE JENKINS
+
+- name: install jenkins
+  yum:
+    name: jenkins
+    state: present
+
+- name: start jenkins
+  systemd:
+    name: jenkins
+    state: started
+
+- name: enable jenkins
+  systemd:
+    name: jenkins
+    enabled: true
+
+#2b - SLEEP FOR 30 SECONDS, AWAIT RESPONSE, CONTINUE PLAY THEREAFTER
+
+- name: sleep for 30 seconds and continue with play
+  wait_for: timeout=30
+  delegate_to: localhost
+
+#2c - LOCATE INITIAL ADMIN PASSWORD
+
+- name: init password jenkin
+  shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+  changed_when: false
+  register: result
+
+#2d - GENERATE ADMIN KEY
+
+- name: print init password jenkins
+  debug:
+    var: result.stdout
